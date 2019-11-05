@@ -1,0 +1,6 @@
+{
+    "require": {
+        "php": "^5.6",
+        "paquettg/php-html-parser": "^1.7"
+    }
+}

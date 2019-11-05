@@ -1,0 +1,175 @@
+{{ header }}{{ column_left }}
+<div id="content">
+  <div class="page-header">
+    <div class="container-fluid">
+      <div class="pull-right">
+        <a href="{{ cancel }}" data-toggle="tooltip" title="{{ button_cancel }}" class="btn btn-default"><i class="fa fa-reply"></i></a></div>
+      <h1>{{ heading_title }}</h1>
+      <ul class="breadcrumb">
+        {% for breadcrumb in breadcrumbs %}
+        <li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="container-fluid">
+    {% if error_warning %}
+    <div class="alert alert-danger alert-dismissible"><i class="fa fa-exclamation-circle"></i> {{ error_warning }}
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+    {% endif %}
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title"><i class="fa fa-pencil"></i> {{ text_edit }}</h3>
+      </div>
+      <div class="panel-body">
+        <form action="{{ action }}" method="post" enctype="multipart/form-data" id="form-module" class="form-horizontal col-xs-12">
+          <div class="form-group">
+            <button type="button" class="form-control" id="parseBrands">{{ parse_brands_button_name }}</button>
+          </div>
+          <div class="form-group">
+            <button type="button" class="form-control" id="parseCategories">{{ parse_categories_button_name }}</button>
+          </div>
+          <div class="form-group">
+            <label>{{ parse_products_label }}</label>
+            <button type="button" class="form-control" id="parseProductCategories">{{ parse_products_get_categories }}</button>
+            <label></label>
+            <div class="row">
+              <div class="col-xs-8">
+                <select class="form-control" id="productsCategories"></select>
+              </div>
+              <div class="col-xs-4">
+                <button class="btn form-control" type="button" id="parseProducts">{{ parse_products_button_name }}</button>
+              </div>
+            </div>
+            <label></label>
+            <textarea id="results" class="form-control"></textarea>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript">
+    var categoryId = 0;
+    var parentCategoryId = 0;
+    var categories = [];
+    var filterGroups = {};
+    var lastPaginationUrl = '';
+    var nextPaginationUrl = '';
+    var productsUrls = [];
+    var categoriesSelect = $('#productsCategories');
+    var prepareUrl = function(action) {
+      var currentUrl = window.location;
+      var queryStringArr = currentUrl.search.replace('?', '').split('&');
+      for (var i = 0; i < queryStringArr.length; i++) {
+        if(queryStringArr[i].indexOf('route') !== -1) {
+          queryStringArr[i] = 'route=' + action
+        }
+      }
+      return currentUrl.origin + currentUrl.pathname + '?' + queryStringArr.join('&');
+    };
+    var updateCategoriesSelect = function() {
+      categoriesSelect.html('');
+      for(var i = 0; i < categories.length; i++) {
+        categoriesSelect.append(
+            $('<option />').val(i).text(categories[i].fullName)
+        )
+      }
+    };
+    var parseNextPage = function(url) {
+      $.ajax({
+        url: prepareUrl('extension/module/vivparser/products'),
+        method: 'post',
+        dataType: 'json',
+        data: {action: 'pageParse', url: url},
+        success: function (res) {
+          nextPaginationUrl = (url !== lastPaginationUrl) ? res.nextPaginationUrl : null;
+          productsUrls = res.products;
+          parseNextProduct();
+        }
+      });
+    };
+    var parseNextProduct = function() {
+      var url = productsUrls.shift();
+      $.ajax({
+        url: prepareUrl('extension/module/vivparser/products'),
+        method: 'post',
+        dataType: 'json',
+        data: {action: 'pageProduct', url: url, filterGroups: filterGroups, categoryId: categoryId, parentCategoryId: parentCategoryId},
+        success: function (res) {
+          if(productsUrls.length) {
+            parseNextProduct();
+          } else if(nextPaginationUrl) {
+            parseNextPage(nextPaginationUrl);
+          } else {
+            $('#parseProducts').prop('disabled',  false);
+          }
+        }
+      });
+    };
+
+    jQuery(document).ready(function($){
+      $(document)
+        .on('click', '#parseBrands', function () {
+          $.ajax({
+            url: prepareUrl('extension/module/vivparser/brands'),
+            method: 'post',
+            dataType: 'json',
+            success: function (res) {
+              console.log(res);
+              alert('Done!')
+            }
+          });
+          return false;
+        })
+        .on('click', '#parseCategories', function () {
+          $.ajax({
+            url: prepareUrl('extension/module/vivparser/categories'),
+            method: 'post',
+            dataType: 'json',
+            success: function (res) {
+              console.log(res);
+              alert('Done!')
+            }
+          });
+          return false;
+        })
+        .on('click', '#parseProductCategories', function () {
+          $.ajax({
+            url: prepareUrl('extension/module/vivparser/products'),
+            method: 'post',
+            dataType: 'json',
+            data: {action: 'start'},
+            success: function (res) {
+              categories = res;
+              updateCategoriesSelect();
+            }
+          });
+          return false;
+        })
+        .on('click', '#parseProducts', function () {
+          var category = categoriesSelect.val();
+          if(!category) {
+            return alert('{{ parse_should_have_category }}')
+          }
+          $(this).prop('disabled', true);
+          var url = categories[category].href;
+          $.ajax({
+            url: prepareUrl('extension/module/vivparser/products'),
+            method: 'post',
+            dataType: 'json',
+            data: {action: 'startParse', url: url, name: categories[category].name},
+            success: function (res) {
+              categoryId = res.categoryId;
+              parentCategoryId = res.parentCategoryId;
+              filterGroups = res.lastPaginationUrl || {};
+              lastPaginationUrl = res.lastPaginationUrl || null;
+              parseNextPage(url);
+            }
+          });
+          return false;
+        })
+    });
+  </script>
+</div>
+{{ footer }}
