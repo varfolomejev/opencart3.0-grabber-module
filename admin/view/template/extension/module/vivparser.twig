@@ -43,7 +43,7 @@
               </div>
             </div>
             <label></label>
-            <textarea id="results" class="form-control"></textarea>
+            <textarea id="results" class="form-control" style="height: 250px;"></textarea>
           </div>
         </form>
       </div>
@@ -58,6 +58,7 @@
     var nextPaginationUrl = '';
     var productsUrls = [];
     var categoriesSelect = $('#productsCategories');
+    var resultsTextarea = $('#results');
     var prepareUrl = function(action) {
       var currentUrl = window.location;
       var queryStringArr = currentUrl.search.replace('?', '').split('&');
@@ -77,6 +78,7 @@
       }
     };
     var parseNextPage = function(url) {
+      log('Парсим страницу категории ' + url);
       $.ajax({
         url: prepareUrl('extension/module/vivparser/products'),
         method: 'post',
@@ -86,27 +88,44 @@
           nextPaginationUrl = (url !== lastPaginationUrl) ? res.nextPaginationUrl : null;
           productsUrls = res.products;
           parseNextProduct();
+        },
+        error: function (xhr) {
+          log('Ошибка ' + xhr.responseText);
         }
       });
     };
     var parseNextProduct = function() {
       var url = productsUrls.shift();
+      log('Парсим страницу продукта ' + url);
       $.ajax({
         url: prepareUrl('extension/module/vivparser/products'),
         method: 'post',
         dataType: 'json',
         data: {action: 'pageProduct', url: url, filterGroups: filterGroups, categoryId: categoryId, parentCategoryId: parentCategoryId},
         success: function (res) {
+          if(!res.status || res.status !== 'ok') {
+            $('#parseProducts').prop('disabled',  false);
+            return
+          }
+          log('Парсинг товара завершен успешно, действие ' + res.action + ', ID товара ' + res.product);
           if(productsUrls.length) {
             parseNextProduct();
           } else if(nextPaginationUrl) {
             parseNextPage(nextPaginationUrl);
           } else {
             $('#parseProducts').prop('disabled',  false);
+            log('Парсинг успешно завершен');
           }
+        },
+        error: function (xhr) {
+          log('Ошибка ' + xhr.responseText);
         }
       });
     };
+    var log = function(msg) {
+      resultsTextarea.val(resultsTextarea.val() + '\r\n' + msg);
+      resultsTextarea.scrollTop(resultsTextarea[0].scrollHeight - resultsTextarea.height());
+    }
 
     jQuery(document).ready(function($){
       $(document)
@@ -143,6 +162,7 @@
             success: function (res) {
               categories = res;
               updateCategoriesSelect();
+              log('Категории успешно обновлены');
             }
           });
           return false;
@@ -152,7 +172,7 @@
           if(!category) {
             return alert('{{ parse_should_have_category }}')
           }
-          $(this).prop('disabled', true);
+          // $(this).prop('disabled', true);
           var url = categories[category].href;
           $.ajax({
             url: prepareUrl('extension/module/vivparser/products'),
@@ -162,7 +182,7 @@
             success: function (res) {
               categoryId = res.categoryId;
               parentCategoryId = res.parentCategoryId;
-              filterGroups = res.lastPaginationUrl || {};
+              filterGroups = res.filterGroups || {};
               lastPaginationUrl = res.lastPaginationUrl || null;
               parseNextPage(url);
             }

@@ -28,13 +28,16 @@ abstract class Parser
         if(substr($url, 0, 1) == '.') {
             return $url->url . substr($url, 0, -1);
         } else if(strpos($url, 'http://') === false || strpos($url, 'https://') === false) {
-            return $this->url . $url;
+            return parse_url($this->url, PHP_URL_SCHEME) . '://' . parse_url($this->url, PHP_URL_HOST) . (substr($url, 0, 1) == '/' ? $url : '/' . $url);
         } else {
             return $url;
         }
     }
 
-    public function downloadFile($url, $destination) {
+    public function downloadFile($url, $destination, $replace = false) {
+        if(!$replace && file_exists(DIR_IMAGE . $destination)) {
+            return $destination;
+        }
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);

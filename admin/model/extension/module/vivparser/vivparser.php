@@ -61,11 +61,12 @@ class Modelextensionmodulevivparservivparser extends Model {
         return $categories;
     }
 
-    public function parseProducts($data, $productModel, $filterModel) {
+    public function parseProducts($data, $productModel, $filterModel, $catalogAttribute) {
         $url = isset($data['url']) ? $data['url'] : $this->siteUrl;
         $parser = new \viv\ProductsParser($url, $this->db);
         $parser->productModel = $productModel;
         $parser->filterModel = $filterModel;
+        $parser->attributeModel = $catalogAttribute;
         $result = $parser->parse($data);
         return $result;
     }

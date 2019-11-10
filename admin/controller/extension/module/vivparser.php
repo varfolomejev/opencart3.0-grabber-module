@@ -127,6 +127,7 @@ class ControllerExtensionModuleVivparser extends Controller
     public function products() {
         $this->load->language('catalog/filter');
         $this->load->model('catalog/product');
+        $this->load->model('catalog/attribute');
         $this->load->model('extension/module/vivparser/vivparser');
         $this->load->model('setting/setting');
         $data = [];
@@ -134,7 +135,8 @@ class ControllerExtensionModuleVivparser extends Controller
             $data = $this->model_extension_module_vivparser_vivparser->parseProducts(
                 $this->request->post,
                 $this->model_catalog_product,
-                $this->model_catalog_filter
+                $this->model_catalog_filter,
+                $this->model_catalog_attribute
             );
         }
         echo json_encode($data);
