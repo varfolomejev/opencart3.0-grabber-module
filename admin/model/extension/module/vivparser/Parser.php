@@ -97,5 +97,6 @@ abstract class Parser
         else if($textlat) return str_replace($lat, $cyr, $textlat);
         else return null;
     }
+
     abstract public function parse($data = null);
 }

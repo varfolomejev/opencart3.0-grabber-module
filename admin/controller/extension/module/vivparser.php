@@ -1,4 +1,6 @@
 <?php
+ini_set('display_errors', true);
+
 class ControllerExtensionModuleVivparser extends Controller
 {
 	private $error = array();

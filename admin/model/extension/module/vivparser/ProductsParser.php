@@ -117,24 +117,91 @@ class ProductsParser extends Parser
         }
 
         // Text
+        $productData['name'] = '';
         foreach ($this->dom->find('#breadcrumbs li') as $key => $li) {
+            $productData['name'] = $li->text;
+        }
+        $h1 = $this->dom->find('h1', 0);
+        if(strlen($h1->text)) {
             $filterGroup = false;
-            if($key == 3) {
-                $brandName = trim($li->find('span')->text);
-                $brand = $this->brandExists($brandName);
-                $productData['manufacturer_id'] = $brand['manufacturer_id'];
-                foreach ($data['filterGroups'] as $filterGroupName => $filterGroupId) {
-                    if(strpos($filterGroupName, $brandName) !== false) {
-                        $filterGroup = $filterGroupId;
+//            $titleArr = explode(' ', trim($h1->text));
+//            $productData['name'] = $titleArr[count($titleArr) - 1];
+            $brandCollection = trim(str_replace('Обои', '', str_replace($productData['name'], '', $h1->text)));
+            if(strlen($brandCollection)) {
+                $brandName = false;
+                $collectionName = false;
+                if($this->dom->find('.characteristic p')) {
+                    foreach ($this->dom->find('.characteristic p') as $p) {
+                        $attributeName = trim(str_replace(':', '', $p->find('strong')[0]->innerHtml));
+                        if($attributeName == 'Бренд') {
+                            $imgName = basename($p->find('img')[0]->getAttribute('src'));
+                            foreach ($this->dom->find('#cat_menu > ul > li') as $key => $li) {
+                                if($key == 1 || $key == 2) {
+                                    foreach ($li->find('.subbrands a') as $a) {
+                                        $brandImageName = basename($a->find('img')[0]->getAttribute('src'));
+                                        if($imgName == $brandImageName) {
+                                            $brandName = $this->clearName($a->getAttribute('title'));
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
-            } else if($key == 4) {
-                $filter = $this->getFilterByName($filterGroup, trim($li->find('span')->text));
-                $productData['product_filter'][] = $filter['filter_id'];
-            } else if ($key == 5) {
-                $productData['name'] = $li->text;
+
+//                foreach ($data['filterGroups'] as $filterGroupName => $filterGroupId) {
+//                    $clearedFilterName = trim(str_replace('Коллекции', '', $filterGroupName));
+//                    if(strpos($brandCollection, $clearedFilterName) === 0) {
+//                        $brandName = $clearedFilterName;
+//                        $collectionName = trim(str_replace($brandName, '', $brandCollection));
+//                        break;
+//                    }
+//                }
+
+                if($brandName) {
+                    $brand = $this->brandExists($brandName);
+                    $productData['manufacturer_id'] = $brand['manufacturer_id'];
+                    foreach ($data['filterGroups'] as $filterGroupName => $filterGroupId) {
+                        if(strpos($filterGroupName, $brandName) !== false) {
+                            $filterGroup = $filterGroupId;
+                        }
+                    }
+                    $collectionName = trim(str_replace($brandName, '', $brandCollection));
+                }
+
+                if($collectionName) {
+                    $filter = $this->getFilterByName($filterGroup, $collectionName);
+                    $productData['product_filter'][] = $filter['filter_id'];
+                    $productData['product_attribute'][] = [
+                        'name' => 'Коллекция',
+                        'attribute_id' => 46,
+                        'product_attribute_description' => [
+                            1 => ['text' => $collectionName],
+                            2 => ['text' => $collectionName],
+                            3 => ['text' => $collectionName],
+                        ]
+                    ];
+                }
             }
         }
+//        foreach ($this->dom->find('#breadcrumbs li') as $key => $li) {
+//            $filterGroup = false;
+//            if($key == 3) {
+//                $brandName = trim($li->find('span')->text);
+//                $brand = $this->brandExists($brandName);
+//                $productData['manufacturer_id'] = $brand['manufacturer_id'];
+//                foreach ($data['filterGroups'] as $filterGroupName => $filterGroupId) {
+//                    if(strpos($filterGroupName, $brandName) !== false) {
+//                        $filterGroup = $filterGroupId;
+//                    }
+//                }
+//            } else if($key == 4) {
+//                $filter = $this->getFilterByName($filterGroup, trim($li->find('span')->text));
+//                $productData['product_filter'][] = $filter['filter_id'];
+//            } else if ($key == 5) {
+//                $productData['name'] = $li->text;
+//            }
+//        }
 
         // Price
         $priceSpans = $this->dom->find('.priceText span');
@@ -254,6 +321,7 @@ class ProductsParser extends Parser
             $results['action'] = 'edit';
             $this->productModel->editProduct($product['product_id'], $productData);
         }
+//        print_r($product);exit;
 //        return $productData;
         $results['product'] = $product['product_id'];
         return $results;
