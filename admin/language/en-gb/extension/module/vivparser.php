@@ -15,7 +15,9 @@ $_['parse_categories_button_name'] = 'Спарсить категории';
 $_['parse_products_label'] = 'Парсинг товаров';
 $_['parse_products_get_categories'] = 'Получить категории';
 $_['parse_products_button_name'] = 'Начать парсить товары';
+$_['parse_all_products_button_name'] = 'Начать парсить товары всех категорий';
 $_['parse_should_have_category'] = 'Вытерите категорию для парсинга';
+$_['parse_should_have_categories'] = 'Нужно спарсить категории перед начало парсинга';
 //$_['entry_title']       = 'Heading Title';
 //$_['entry_status']      = 'Status';
 // Error

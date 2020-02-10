@@ -67,7 +67,13 @@ class ProductsParser extends Parser
         }
         $paginationLinks = $this->dom->find('.paging a');
         if(count($paginationLinks)) {
-            $res['nextPaginationUrl'] = $this->getFullUrl($paginationLinks[count($paginationLinks) - 1]->getAttribute('href'));
+            foreach ($paginationLinks as $a) {
+                $res['links'][] = $this->getFullUrl($a->getAttribute('href'));
+                if(!in_array($this->getFullUrl($a->getAttribute('href')), $data['paginationUrls'])) {
+                    $res['nextPaginationUrl'] = $this->getFullUrl($a->getAttribute('href'));
+
+                }
+            }
         }
         return $res;
     }
@@ -132,6 +138,9 @@ class ProductsParser extends Parser
                 $collectionName = false;
                 if($this->dom->find('.characteristic p')) {
                     foreach ($this->dom->find('.characteristic p') as $p) {
+                        if(!$p->find('strong')[0]) {
+                            continue;
+                        }
                         $attributeName = trim(str_replace(':', '', $p->find('strong')[0]->innerHtml));
                         if($attributeName == 'Бренд') {
                             $imgName = basename($p->find('img')[0]->getAttribute('src'));
@@ -247,6 +256,9 @@ class ProductsParser extends Parser
         // Attributes
         if($this->dom->find('.characteristic p')) {
             foreach ($this->dom->find('.characteristic p') as $a) {
+                if(!$a->find('strong')[0]) {
+                    continue;
+                }
                 $attributeName = trim(str_replace(':', '', $a->find('strong')[0]->innerHtml));
                 if($t = $a->find('span', 0)) {
                     $value = $t->text;

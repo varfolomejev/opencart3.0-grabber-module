@@ -61,13 +61,26 @@ class Modelextensionmodulevivparservivparser extends Model {
         return $categories;
     }
 
-    public function parseProducts($data, $productModel, $filterModel, $catalogAttribute) {
-        $url = isset($data['url']) ? $data['url'] : $this->siteUrl;
-        $parser = new \viv\ProductsParser($url, $this->db);
-        $parser->productModel = $productModel;
-        $parser->filterModel = $filterModel;
-        $parser->attributeModel = $catalogAttribute;
-        $result = $parser->parse($data);
-        return $result;
+    public function parseProducts($data, $productModel, $filterModel, $catalogAttribute, $step = 1) {
+        error_reporting(E_ERROR | E_PARSE);
+        if($step > 3) {
+            return [
+                'status' => 'ok',
+                'action' => 'no action',
+                'product' => '0',
+            ];
+        }
+        try {
+            $url = isset($data['url']) ? $data['url'] : $this->siteUrl;
+            $parser = new \viv\ProductsParser($url, $this->db);
+            $parser->productModel = $productModel;
+            $parser->filterModel = $filterModel;
+            $parser->attributeModel = $catalogAttribute;
+            $result = $parser->parse($data);
+            return $result;
+        } catch (Exception $exception) {
+            sleep(3);
+            return $this->parseProducts($data, $productModel, $filterModel, $catalogAttribute, $step + 1);
+        }
     }
 }
