@@ -121,7 +121,7 @@
             log('Ждем минуту перед парсингом следующей страницы пагинации, пытаемся обмануть сервер)');
             setTimeout(function () {
               parseNextPage(nextPaginationUrl);
-            }, 60);
+            }, 60000);
           } else {
             $('#parseProducts').prop('disabled',  false);
             $('#parseAllProducts').prop('disabled',  false);
@@ -132,7 +132,7 @@
               log('Ждем минуту перед парсингом следующей категории, пытаемся обмануть сервер)');
               setTimeout(function () {
                 startParseProducts(currentCategoryIndex);
-              }, 60);
+              }, 60000);
             }
           }
         },
