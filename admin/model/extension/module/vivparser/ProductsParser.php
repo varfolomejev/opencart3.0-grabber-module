@@ -65,16 +65,20 @@ class ProductsParser extends Parser
         foreach ($this->dom->find('.catalog-content .product') as $product) {
             $res['products'][] = $this->getFullUrl($product->find('.name_product a', 0)->getAttribute('href'));
         }
-        $paginationLinks = $this->dom->find('.paging a');
-        if(count($paginationLinks)) {
-            foreach ($paginationLinks as $a) {
-                $res['links'][] = $this->getFullUrl($a->getAttribute('href'));
-                if(!in_array($this->getFullUrl($a->getAttribute('href')), $data['paginationUrls'])) {
-                    $res['nextPaginationUrl'] = $this->getFullUrl($a->getAttribute('href'));
-
-                }
+        $span = $this->dom->find('.paging span', 0);
+        if($span) {
+            $a = $span->nextSibling();
+            if($a && strlen($a->getAttribute('href'))) {
+                $res['nextPaginationUrl'] = $this->getFullUrl($a->getAttribute('href'));
             }
         }
+//        foreach ($this->dom->find('.paging a') as $a) {
+//            $res['links'][] = $this->getFullUrl($a->getAttribute('href'));
+//            if(!in_array($this->getFullUrl($a->getAttribute('href')), $data['paginationUrls'])) {
+//                $res['nextPaginationUrl'] = $this->getFullUrl($a->getAttribute('href'));
+//
+//            }
+//        }
         return $res;
     }
 

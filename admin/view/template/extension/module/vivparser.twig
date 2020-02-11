@@ -64,7 +64,6 @@
     var resultsTextarea = $('#results');
     var parseAllCategories = false;
     var currentCategoryIndex = 0;
-    var paginationUrls = [];
     var prepareUrl = function(action) {
       var currentUrl = window.location;
       var queryStringArr = currentUrl.search.replace('?', '').split('&');
@@ -85,12 +84,11 @@
     };
     var parseNextPage = function(url) {
       log('Парсим страницу категории ' + url);
-      paginationUrls.push(url)
       $.ajax({
         url: prepareUrl('extension/module/vivparser/products'),
         method: 'post',
         dataType: 'json',
-        data: {action: 'pageParse', url: url, paginationUrls: paginationUrls},
+        data: {action: 'pageParse', url: url},
         success: function (res) {
           nextPaginationUrl = (url !== lastPaginationUrl) ? (res.nextPaginationUrl || lastPaginationUrl) : null;
           productsUrls = res.products;
@@ -208,7 +206,6 @@
             return alert('{{ parse_should_have_category }}')
           }
           parseAllCategories = false;
-          paginationUrls = [];
           startParseProducts(category);
           return false;
         })
@@ -218,7 +215,6 @@
             return alert('{{ parse_should_have_categories }}')
           }
           parseAllCategories = true;
-          paginationUrls = [];
           startParseProducts(currentCategoryIndex);
           return false;
         })
