@@ -335,6 +335,8 @@ class ProductsParser extends Parser
             $product['product_id'] = $product_id;
         } else {
             $results['action'] = 'edit';
+            $currentCategoriesIds = $this->getProductCategories($product['product_id']);
+            $productData['product_category'] = array_unique(array_merge($currentCategoriesIds, $productData['product_category']));
             $this->productModel->editProduct($product['product_id'], $productData);
         }
 //        print_r($product);exit;
@@ -393,5 +395,14 @@ class ProductsParser extends Parser
     public function brandExists($name) {
         $query = $this->db->query("SELECT manufacturer_id FROM " . DB_PREFIX . "manufacturer WHERE name = '" . $this->db->escape($name) . "'");
         return $query->row;
+    }
+
+    public function getProductCategories($product_id) {
+        $product_category_data = [];
+        $query = $this->db->query("SELECT * FROM " . DB_PREFIX . "product_to_category WHERE product_id = '" . (int)$product_id . "'");
+        foreach ($query->rows as $result) {
+            $product_category_data[] = $result['category_id'];
+        }
+        return $product_category_data;
     }
 }
