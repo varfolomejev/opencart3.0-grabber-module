@@ -329,6 +329,18 @@ class ProductsParser extends Parser
             'action' => 'create',
 //            'product' => $slug,
         ];
+
+        if($tags) {
+            foreach ($tags as $tag) {
+                if(strpos($tag, 'обои для') !== false) {
+                    $category = $this->getSubCategoryIdByName(trim(str_replace('обои', '', $tag)));
+                    if($category && !in_array($category['category_id'], $productData['product_category'])) {
+                        $productData['product_category'][] = $category['category_id'];
+                    }
+                }
+            }
+        }
+
         $product = $this->exists($productData['model']);
         if(!$product) {
             $product_id = $this->productModel->addProduct($productData);
